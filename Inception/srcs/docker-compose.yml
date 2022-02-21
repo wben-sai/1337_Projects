@@ -1,0 +1,68 @@
+version: '3'
+services:
+    wordpress:
+        build:
+            context: ./requirements/wordpress
+        image: wordpress
+        container_name: wordpress
+        ports:
+            - '9000'
+        volumes:
+            - Wordpress:/var/www/html
+        depends_on:
+            - mariadb
+        networks:
+            - app-network
+        env_file:
+            - .env
+        restart: unless-stopped
+
+    nginx:
+        build:
+            context: ./requirements/nginx
+        image: nginx
+        container_name: nginx
+        ports:
+            - "443:443"
+        volumes:
+            - Wordpress:/var/www/html
+        depends_on: 
+            - wordpress
+        networks:
+            - app-network
+        restart: unless-stopped
+        
+    mariadb:
+        build:
+            context: ./requirements/mariadb
+            args:
+                - MYSQL_USER=$MYSQL_USER
+                - MYSQL_PASSWORD=$MYSQL_PASSWORD
+                - MYSQL_DATABASE=$MYSQL_DATABASE
+        image: mariadb
+        container_name: mariadb
+        ports:
+            - "3306"
+        networks:
+            - app-network
+        volumes:
+            - DB:/var/lib/mysql
+        restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  DB:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/wben-sai/data/DB
+      o: bind
+  Wordpress:
+     driver: local
+     driver_opts:
+       type: none
+       device: /home/wben-sai/data/Wordpress
+       o: bind
